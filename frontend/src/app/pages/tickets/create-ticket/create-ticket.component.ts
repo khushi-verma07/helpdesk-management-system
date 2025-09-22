@@ -9,130 +9,81 @@ import { TicketService } from '../../../services/ticket.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
-    <div class="create-ticket-container">
-      <div class="create-ticket-card">
-        <h2>Create New Ticket</h2>
+    <div class="h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col">
+      <header class="bg-white px-4 py-2 shadow-lg flex-shrink-0 border-b border-gray-200">
+        <h1 class="text-base font-bold text-slate-800">Create Support Ticket</h1>
+      </header>
+      
+      <div class="flex-1 p-2 max-w-lg mx-auto flex items-center">
+      <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-white/20 w-full">
+        <div class="text-center mb-3">
+          <div class="w-5 h-5 bg-gradient-to-r from-slate-600 to-slate-700 rounded flex items-center justify-center mx-auto mb-1">
+            <span class="text-white text-xs font-bold">🎫</span>
+          </div>
+          <h2 class="text-sm font-bold bg-gradient-to-r from-slate-600 to-slate-700 bg-clip-text text-transparent">Create New Ticket</h2>
+        </div>
         
-        <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label for="title">Title *</label>
+        <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" class="space-y-3">
+          <div>
+            <label for="title" class="block text-xs text-gray-700 mb-1">Title *</label>
             <input 
               type="text" 
               id="title" 
               formControlName="title"
-              placeholder="Brief description of your issue">
-            <div *ngIf="ticketForm.get('title')?.invalid && ticketForm.get('title')?.touched" class="error-msg">
+              placeholder="Brief description"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white/80">
+            <div *ngIf="ticketForm.get('title')?.invalid && ticketForm.get('title')?.touched" class="text-red-600 text-xs mt-1">
               Title is required
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="description">Description *</label>
+          <div>
+            <label for="description" class="block text-xs text-gray-700 mb-1">Description *</label>
             <textarea 
               id="description" 
               formControlName="description" 
-              rows="5"
-              placeholder="Detailed description of your issue"></textarea>
-            <div *ngIf="ticketForm.get('description')?.invalid && ticketForm.get('description')?.touched" class="error-msg">
+              rows="3"
+              placeholder="Describe your issue"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white/80"></textarea>
+            <div *ngIf="ticketForm.get('description')?.invalid && ticketForm.get('description')?.touched" class="text-red-600 text-xs mt-1">
               Description is required
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="priority">Priority</label>
-            <select id="priority" formControlName="priority">
-              <option value="low">Low - General inquiry</option>
-              <option value="medium">Medium - Standard issue</option>
-              <option value="high">High - Urgent issue</option>
-            </select>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="priority" class="block text-xs text-gray-700 mb-1">Priority</label>
+              <select id="priority" formControlName="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white/80">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="category" class="block text-xs text-gray-700 mb-1">Category</label>
+              <input 
+                type="text" 
+                id="category" 
+                formControlName="category"
+                placeholder="e.g., Technical"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white/80">
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="category">Category (Optional)</label>
-            <input 
-              type="text" 
-              id="category" 
-              formControlName="category"
-              placeholder="e.g., Technical, Billing, General">
-          </div>
-
-          <div class="form-actions">
-            <button type="button" routerLink="/dashboard" class="btn-secondary">Cancel</button>
-            <button type="submit" [disabled]="ticketForm.invalid || loading" class="btn-primary">
+          <div class="flex gap-3 justify-end pt-2">
+            <button type="button" routerLink="/dashboard" class="border-2 border-slate-600 bg-transparent text-slate-700 hover:bg-gradient-to-br hover:from-slate-600 hover:to-slate-700 hover:!text-white hover:border-transparent px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200">Cancel</button>
+            <button type="submit" [disabled]="ticketForm.invalid || loading" class="border-2 border-slate-600 bg-transparent text-slate-700 hover:bg-gradient-to-br hover:from-slate-600 hover:to-slate-700 hover:!text-white hover:border-transparent disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-700 disabled:hover:border-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200">
               {{loading ? 'Creating...' : 'Create Ticket'}}
             </button>
           </div>
         </form>
 
-        <div *ngIf="errorMessage" class="error-msg">{{errorMessage}}</div>
+        <div *ngIf="errorMessage" class="text-red-600 text-xs mt-2 p-2 bg-red-50/80 border border-red-200 rounded-lg backdrop-blur-sm">{{errorMessage}}</div>
       </div>
     </div>
   `,
-  styles: [`
-    .create-ticket-container {
-      padding: 2rem;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .create-ticket-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: #333;
-    }
-    input, textarea, select {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #007bff;
-    }
-    .form-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-    }
-    .btn-primary, .btn-secondary {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-    }
-    .btn-primary {
-      background-color: #28a745;
-      color: white;
-    }
-    .btn-primary:disabled {
-      background-color: #6c757d;
-      cursor: not-allowed;
-    }
-    .btn-secondary {
-      background-color: #6c757d;
-      color: white;
-    }
-    .error-msg {
-      color: #dc3545;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-    }
-  `]
+  styles: []
 })
 export class CreateTicketComponent {
   ticketForm: FormGroup;

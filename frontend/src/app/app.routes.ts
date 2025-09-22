@@ -9,6 +9,7 @@ import { TicketDetailComponent } from './pages/tickets/ticket-detail/ticket-deta
 import { UnassignedTicketsComponent } from './pages/admin/unassigned-tickets/unassigned-tickets.component';
 import { AllTicketsComponent } from './pages/admin/all-tickets/all-tickets.component';
 import { AssignedTicketsComponent } from './pages/agent/assigned-tickets/assigned-tickets.component';
+import { AdminComponent } from './pages/admin/admin.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'tickets/assigned', component: AssignedTicketsComponent, canActivate: [AuthGuard, RoleGuard], data: { role: 'agent' } },
   
   // Admin routes
+  { path: 'admin', component: AdminComponent, canActivate: [AuthGuard, RoleGuard], data: { role: 'admin' } },
   { path: 'admin/dashboard', component: AdminDashboardComponent, canActivate: [AuthGuard, RoleGuard], data: { role: 'admin' } },
   { path: 'admin/tickets/unassigned', component: UnassignedTicketsComponent, canActivate: [AuthGuard, RoleGuard], data: { role: 'admin' } },
   { path: 'admin/tickets', component: AllTicketsComponent, canActivate: [AuthGuard, RoleGuard], data: { role: 'admin' } },

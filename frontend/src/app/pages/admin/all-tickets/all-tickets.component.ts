@@ -10,24 +10,27 @@ import { Ticket } from '../../../models/ticket.model';
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
-    <div class="all-tickets-container">
-      <div class="header">
-        <h2>All Tickets</h2>
-        <div class="header-actions">
-          <div class="stats">
-            <span class="stat-item">{{tickets.length}} total tickets</span>
-            <span class="stat-item">{{getUnassignedCount()}} unassigned</span>
-            <span class="stat-item">{{getOpenCount()}} open</span>
-            <span class="stat-item overdue" *ngIf="getOverdueCount() > 0">{{getOverdueCount()}} overdue</span>
+    <div class="p-8 max-w-7xl mx-auto">
+      <div class="mb-8">
+        <div class="flex items-center gap-4 mb-4">
+          <button routerLink="/dashboard" class="text-slate-600 hover:text-slate-800 text-lg">←</button>
+          <h2 class="text-2xl font-bold">All Tickets</h2>
+        </div>
+        <div class="flex justify-between items-center">
+          <div class="flex gap-4">
+            <span class="bg-gray-100 px-4 py-2 rounded font-medium">{{tickets.length}} total tickets</span>
+            <span class="bg-gray-100 px-4 py-2 rounded font-medium">{{getUnassignedCount()}} unassigned</span>
+            <span class="bg-gray-100 px-4 py-2 rounded font-medium">{{getOpenCount()}} open</span>
+            <span *ngIf="getOverdueCount() > 0" class="bg-red-100 text-red-800 px-4 py-2 rounded font-bold">{{getOverdueCount()}} overdue</span>
           </div>
-          <button (click)="refreshTickets()" [disabled]="loading" class="refresh-btn">
+          <button (click)="refreshTickets()" [disabled]="loading" class="bg-green-600 hover:bg-green-700 disabled:bg-gray-500 text-white px-4 py-2 rounded ml-4">
             {{loading ? 'Refreshing...' : 'Refresh'}}
           </button>
         </div>
       </div>
 
-      <div class="filters">
-        <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="filter-select">
+      <div class="flex gap-4 mb-8">
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="px-2 py-1 border border-gray-300 rounded">
           <option value="">All Status</option>
           <option value="open">Open</option>
           <option value="in_progress">In Progress</option>
@@ -36,215 +39,87 @@ import { Ticket } from '../../../models/ticket.model';
           <option value="closed">Closed</option>
         </select>
         
-        <select [(ngModel)]="priorityFilter" (change)="applyFilters()" class="filter-select">
+        <select [(ngModel)]="priorityFilter" (change)="applyFilters()" class="px-2 py-1 border border-gray-300 rounded">
           <option value="">All Priorities</option>
           <option value="high">High</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
         
-        <select [(ngModel)]="overdueFilter" (change)="applyFilters()" class="filter-select">
+        <select [(ngModel)]="overdueFilter" (change)="applyFilters()" class="px-2 py-1 border border-gray-300 rounded">
           <option value="">All Tickets</option>
           <option value="overdue">Overdue Only</option>
         </select>
       </div>
 
-      <div *ngIf="loading" class="loading">Loading all tickets...</div>
+      <div *ngIf="loading" class="text-center py-12 text-gray-600">Loading all tickets...</div>
 
-      <div class="tickets-table" *ngIf="!loading && filteredTickets.length > 0">
-        <table>
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden" *ngIf="!loading && filteredTickets.length > 0">
+        <table class="w-full">
           <thead>
-            <tr>
-              <th>Ticket #</th>
-              <th>Title</th>
-              <th>Customer</th>
-              <th>Assigned Agent</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>SLA Deadline</th>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Ticket #</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Title</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Customer</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Assigned Agent</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Priority</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Status</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Created</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">SLA Deadline</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let ticket of filteredTickets">
-              <td>
-                <a [routerLink]="['/tickets', ticket.id]" class="ticket-link">#{{ticket.id}}</a>
+            <tr *ngFor="let ticket of filteredTickets" class="border-b border-gray-200">
+              <td class="px-4 py-4">
+                <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 hover:text-blue-800 font-medium">#{{ticket.id}}</a>
               </td>
-              <td>
-                <div class="ticket-title">{{ticket.title}}</div>
-                <div class="ticket-category" *ngIf="ticket.category">{{ticket.category}}</div>
+              <td class="px-4 py-4">
+                <div class="font-medium mb-1">{{ticket.title}}</div>
+                <div *ngIf="ticket.category" class="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block">{{ticket.category}}</div>
               </td>
-              <td>
-                <div class="customer-info">
-                  <div>{{ticket.customer_first_name}} {{ticket.customer_last_name}}</div>
-                  <div class="customer-email">{{ticket.customer_email}}</div>
-                </div>
+              <td class="px-4 py-4 text-sm">
+                <div>{{ticket.customer_first_name}} {{ticket.customer_last_name}}</div>
+                <div class="text-gray-600">{{ticket.customer_email}}</div>
               </td>
-              <td>
-                <div *ngIf="ticket.agent_first_name" class="agent-info">
+              <td class="px-4 py-4 text-sm">
+                <div *ngIf="ticket.agent_first_name">
                   {{ticket.agent_first_name}} {{ticket.agent_last_name}}
                 </div>
-                <span *ngIf="!ticket.agent_first_name" class="unassigned">Unassigned</span>
+                <span *ngIf="!ticket.agent_first_name" class="text-red-600 italic">Unassigned</span>
               </td>
-              <td>
-                <span class="priority" [class]="'priority-' + ticket.priority">{{ticket.priority | uppercase}}</span>
+              <td class="px-4 py-4">
+                <span class="px-3 py-1 rounded-full text-xs font-bold" 
+                      [ngClass]="{
+                        'bg-green-100 text-green-800': ticket.priority === 'low',
+                        'bg-yellow-100 text-yellow-800': ticket.priority === 'medium',
+                        'bg-red-100 text-red-800': ticket.priority === 'high'
+                      }">{{ticket.priority | uppercase}}</span>
               </td>
-              <td>
-                <span class="status" [class]="'status-' + ticket.status">{{getStatusLabel(ticket.status)}}</span>
+              <td class="px-4 py-4">
+                <span class="px-3 py-1 rounded-full text-xs font-medium"
+                      [ngClass]="{
+                        'bg-blue-100 text-blue-800': ticket.status === 'open',
+                        'bg-yellow-100 text-yellow-800': ticket.status === 'in_progress',
+                        'bg-red-100 text-red-800': ticket.status === 'on_hold',
+                        'bg-green-100 text-green-800': ticket.status === 'resolved',
+                        'bg-gray-100 text-gray-800': ticket.status === 'closed'
+                      }">{{getStatusLabel(ticket.status)}}</span>
               </td>
-              <td>{{ticket.created_at | date:'MMM d, h:mm a'}}</td>
-              <td>
-                <span class="sla-deadline" [class.overdue]="isTicketOverdue(ticket)">
-                  {{ticket.sla_deadline | date:'MMM d, h:mm a'}}
-                </span>
+              <td class="px-4 py-4 text-sm">{{ticket.created_at | date:'MMM d, h:mm a'}}</td>
+              <td class="px-4 py-4 text-sm" [class.text-red-600]="isTicketOverdue(ticket)" [class.font-medium]="isTicketOverdue(ticket)">
+                {{ticket.sla_deadline | date:'MMM d, h:mm a'}}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div *ngIf="!loading && filteredTickets.length === 0" class="no-tickets">
+      <div *ngIf="!loading && filteredTickets.length === 0" class="text-center py-12 text-gray-600">
         <p>No tickets found matching the current filters.</p>
       </div>
     </div>
   `,
-  styles: [`
-    .all-tickets-container {
-      padding: 2rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    .header {
-      margin-bottom: 2rem;
-    }
-    .header-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .refresh-btn {
-      background-color: #28a745;
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-left: 1rem;
-    }
-    .refresh-btn:disabled {
-      background-color: #6c757d;
-      cursor: not-allowed;
-    }
-    .stats {
-      display: flex;
-      gap: 1rem;
-    }
-    .stat-item {
-      background: #f8f9fa;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-    .stat-item.overdue {
-      background: #f8d7da;
-      color: #721c24;
-      font-weight: bold;
-    }
-    .filters {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    .filter-select {
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-    }
-    .tickets-table {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 1rem;
-      text-align: left;
-      border-bottom: 1px solid #e9ecef;
-    }
-    th {
-      background: #f8f9fa;
-      font-weight: 600;
-      color: #495057;
-    }
-    .ticket-link {
-      color: #007bff;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .ticket-title {
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-    }
-    .ticket-category {
-      font-size: 0.875rem;
-      color: #666;
-      background: #f8f9fa;
-      padding: 0.125rem 0.5rem;
-      border-radius: 4px;
-      display: inline-block;
-    }
-    .customer-info, .agent-info {
-      font-size: 0.875rem;
-    }
-    .customer-email {
-      color: #666;
-    }
-    .unassigned {
-      color: #dc3545;
-      font-style: italic;
-    }
-    .priority {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-    }
-    .priority-low { background-color: #d4edda; color: #155724; }
-    .priority-medium { background-color: #fff3cd; color: #856404; }
-    .priority-high { background-color: #f8d7da; color: #721c24; }
-    .status {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .status-open { background-color: #cce5ff; color: #004085; }
-    .status-in_progress { background-color: #fff3cd; color: #856404; }
-    .status-on_hold { background-color: #f8d7da; color: #721c24; }
-    .status-resolved { background-color: #d4edda; color: #155724; }
-    .status-closed { background-color: #e2e3e5; color: #383d41; }
-    .sla-deadline {
-      font-size: 0.875rem;
-    }
-    .sla-deadline.overdue {
-      color: #dc3545;
-      font-weight: 500;
-    }
-    .no-tickets {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-    }
-  `]
+  styles: []
 })
 export class AllTicketsComponent implements OnInit, OnDestroy {
   tickets: Ticket[] = [];

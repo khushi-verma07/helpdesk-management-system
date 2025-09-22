@@ -10,215 +10,90 @@ import { Ticket } from '../../../models/ticket.model';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="assigned-tickets-container">
-      <div class="header">
-        <h2>My Assigned Tickets</h2>
-        <div class="stats">
-          <span class="stat-item">{{tickets.length}} assigned tickets</span>
-          <span class="stat-item">{{getHighPriorityCount()}} high priority</span>
+    <div class="p-8 max-w-6xl mx-auto">
+      <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center gap-4">
+          <button routerLink="/dashboard" class="text-slate-600 hover:text-slate-800 text-lg">←</button>
+          <h2 class="text-2xl font-bold text-slate-800">My Assigned Tickets</h2>
+        </div>
+        <div class="flex gap-4">
+          <span class="bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium">{{tickets.length}} assigned tickets</span>
+          <span class="bg-gradient-to-r from-amber-100 to-orange-200 text-amber-700 px-4 py-2 rounded-lg font-medium">{{getHighPriorityCount()}} high priority</span>
         </div>
       </div>
 
-      <div *ngIf="loading" class="loading">Loading your assigned tickets...</div>
+      <div *ngIf="loading" class="text-center py-12 text-slate-600">Loading your assigned tickets...</div>
 
-      <div *ngIf="!loading && tickets.length === 0" class="no-tickets">
-        <div class="empty-state">
-          <h3>No tickets assigned</h3>
-          <p>You don't have any tickets assigned to you yet.</p>
+      <div *ngIf="!loading && tickets.length === 0" class="text-center py-12">
+        <div>
+          <h3 class="text-slate-600 mb-4">No tickets assigned</h3>
+          <p class="text-slate-500">You don't have any tickets assigned to you yet.</p>
         </div>
       </div>
 
-      <div class="tickets-grid" *ngIf="!loading && tickets.length > 0">
-        <div *ngFor="let ticket of tickets" class="ticket-card" [routerLink]="['/tickets', ticket.id]">
-          <div class="ticket-header">
-            <div class="ticket-info">
-              <h3>{{ticket.title}}</h3>
-              <span class="ticket-id">#{{ticket.id}}</span>
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" *ngIf="!loading && tickets.length > 0">
+        <div *ngFor="let ticket of tickets" 
+             class="bg-white p-6 rounded-lg shadow-lg cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl border-l-4 border-l-slate-400"
+             [routerLink]="['/tickets', ticket.id]">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800 mb-1">{{ticket.title}}</h3>
+              <span class="text-sm text-slate-600">#{{ticket.id}}</span>
             </div>
-            <div class="ticket-badges">
-              <span class="priority" [class]="'priority-' + ticket.priority">{{ticket.priority | uppercase}}</span>
-              <span class="status" [class]="'status-' + ticket.status">{{getStatusLabel(ticket.status)}}</span>
+            <div class="flex flex-col gap-2 items-end">
+              <span class="px-3 py-1 rounded-full text-xs font-bold"
+                    [ngClass]="{
+                      'bg-gradient-to-r from-emerald-100 to-green-200 text-emerald-800': ticket.priority === 'low',
+                      'bg-gradient-to-r from-amber-100 to-orange-200 text-amber-800': ticket.priority === 'medium',
+                      'bg-gradient-to-r from-red-100 to-red-200 text-red-800': ticket.priority === 'high'
+                    }">{{ticket.priority | uppercase}}</span>
+              <span class="px-3 py-1 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800': ticket.status === 'open',
+                      'bg-gradient-to-r from-amber-100 to-orange-200 text-amber-800': ticket.status === 'in_progress',
+                      'bg-gradient-to-r from-red-100 to-red-200 text-red-800': ticket.status === 'on_hold',
+                      'bg-gradient-to-r from-emerald-100 to-green-200 text-emerald-800': ticket.status === 'resolved'
+                    }">{{getStatusLabel(ticket.status)}}</span>
             </div>
           </div>
           
-          <p class="ticket-description">{{getShortDescription(ticket.description)}}</p>
+          <p class="text-slate-600 mb-4 leading-relaxed">{{getShortDescription(ticket.description)}}</p>
           
-          <div class="customer-info">
-            <strong>Customer:</strong> {{ticket.customer_first_name}} {{ticket.customer_last_name}}
-            <br>
-            <span class="customer-email">{{ticket.customer_email}}</span>
+          <div class="bg-gradient-to-r from-slate-50 to-slate-100 p-4 rounded-lg mb-4 text-sm border border-slate-200">
+            <strong class="text-slate-700">Customer:</strong> <span class="text-slate-800">{{ticket.customer_first_name}} {{ticket.customer_last_name}}</span><br>
+            <span class="text-slate-600">{{ticket.customer_email}}</span>
           </div>
           
-          <div class="ticket-meta">
-            <div class="meta-item">
-              <span class="label">Created:</span>
-              <span>{{ticket.created_at | date:'MMM d, h:mm a'}}</span>
+          <div class="mb-4 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="font-medium text-slate-600">Created:</span>
+              <span class="text-slate-700">{{ticket.created_at | date:'MMM d, h:mm a'}}</span>
             </div>
-            <div class="meta-item">
-              <span class="label">SLA Deadline:</span>
-              <span [class.overdue]="isOverdue(ticket.sla_deadline)">
+            <div class="flex justify-between text-sm">
+              <span class="font-medium text-slate-600">SLA Deadline:</span>
+              <span [class.text-red-600]="isOverdue(ticket.sla_deadline) && !isResolved(ticket.status)" 
+                    [class.font-medium]="isOverdue(ticket.sla_deadline) && !isResolved(ticket.status)"
+                    [class.text-emerald-600]="isResolved(ticket.status)"
+                    [class.line-through]="isResolved(ticket.status)"
+                    class="text-slate-700">
                 {{ticket.sla_deadline | date:'MMM d, h:mm a'}}
+                <span *ngIf="isResolved(ticket.status)" class="ml-2 text-xs text-emerald-600">(Resolved)</span>
               </span>
             </div>
-            <div class="meta-item" *ngIf="ticket.category">
-              <span class="label">Category:</span>
-              <span>{{ticket.category}}</span>
+            <div class="flex justify-between text-sm" *ngIf="ticket.category">
+              <span class="font-medium text-slate-600">Category:</span>
+              <span class="text-slate-700">{{ticket.category}}</span>
             </div>
           </div>
           
-          <div class="ticket-actions">
-            <button class="btn-view">View Details</button>
+          <div class="border-t border-slate-200 pt-4">
+            <button class="bg-gradient-to-br from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all">View Details</button>
           </div>
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    .assigned-tickets-container {
-      padding: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-    }
-    .stats {
-      display: flex;
-      gap: 1rem;
-    }
-    .stat-item {
-      background: #f8f9fa;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-    }
-    .no-tickets {
-      text-align: center;
-      padding: 3rem;
-    }
-    .empty-state h3 {
-      color: #666;
-      margin-bottom: 1rem;
-    }
-    .tickets-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-      gap: 1.5rem;
-    }
-    .ticket-card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border-left: 4px solid #e9ecef;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }
-    .ticket-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .ticket-card.priority-high {
-      border-left-color: #dc3545;
-    }
-    .ticket-card.priority-medium {
-      border-left-color: #ffc107;
-    }
-    .ticket-card.priority-low {
-      border-left-color: #28a745;
-    }
-    .ticket-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-    }
-    .ticket-info h3 {
-      margin: 0 0 0.25rem 0;
-      font-size: 1.1rem;
-      color: #333;
-    }
-    .ticket-id {
-      color: #666;
-      font-size: 0.875rem;
-    }
-    .ticket-badges {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      align-items: flex-end;
-    }
-    .priority, .status {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      white-space: nowrap;
-    }
-    .priority-low { background-color: #d4edda; color: #155724; }
-    .priority-medium { background-color: #fff3cd; color: #856404; }
-    .priority-high { background-color: #f8d7da; color: #721c24; }
-    .status-open { background-color: #cce5ff; color: #004085; }
-    .status-in_progress { background-color: #fff3cd; color: #856404; }
-    .status-on_hold { background-color: #f8d7da; color: #721c24; }
-    .status-resolved { background-color: #d4edda; color: #155724; }
-    .ticket-description {
-      color: #666;
-      margin-bottom: 1rem;
-      line-height: 1.4;
-    }
-    .customer-info {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-      font-size: 0.875rem;
-    }
-    .customer-email {
-      color: #666;
-    }
-    .ticket-meta {
-      margin-bottom: 1rem;
-    }
-    .meta-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-      font-size: 0.875rem;
-    }
-    .label {
-      font-weight: 500;
-      color: #666;
-    }
-    .overdue {
-      color: #dc3545;
-      font-weight: 500;
-    }
-    .ticket-actions {
-      border-top: 1px solid #e9ecef;
-      padding-top: 1rem;
-    }
-    .btn-view {
-      background-color: #007bff;
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-  `]
+  styles: []
 })
 export class AssignedTicketsComponent implements OnInit {
   tickets: Ticket[] = [];
@@ -269,5 +144,9 @@ export class AssignedTicketsComponent implements OnInit {
 
   isOverdue(deadline: string): boolean {
     return new Date(deadline) < new Date();
+  }
+
+  isResolved(status: string): boolean {
+    return status === 'resolved' || status === 'closed';
   }
 }

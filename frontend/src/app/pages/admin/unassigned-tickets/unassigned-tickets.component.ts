@@ -17,74 +17,78 @@ interface Agent {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
-    <div class="unassigned-tickets-container">
-      <div class="header">
-        <h2>Unassigned Tickets</h2>
-        <div class="stats">
-          <span class="stat-item">{{tickets.length}} unassigned tickets</span>
+    <div class="p-8 max-w-7xl mx-auto">
+      <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center gap-4">
+          <button routerLink="/dashboard" class="text-slate-600 hover:text-slate-800 text-lg">←</button>
+          <h2 class="text-2xl font-bold">Unassigned Tickets</h2>
+        </div>
+        <div class="flex gap-4">
+          <span class="bg-gray-100 px-4 py-2 rounded font-medium">{{tickets.length}} unassigned tickets</span>
         </div>
       </div>
 
-      <div *ngIf="loading" class="loading">Loading unassigned tickets...</div>
+      <div *ngIf="loading" class="text-center py-12 text-gray-600">Loading unassigned tickets...</div>
 
-      <div *ngIf="!loading && tickets.length === 0" class="no-tickets">
-        <div class="empty-state">
-          <h3>No unassigned tickets</h3>
-          <p>All tickets have been assigned to agents.</p>
+      <div *ngIf="!loading && tickets.length === 0" class="text-center py-12">
+        <div>
+          <h3 class="text-gray-600 mb-4">No unassigned tickets</h3>
+          <p class="text-gray-500">All tickets have been assigned to agents.</p>
         </div>
       </div>
 
-      <div class="tickets-table" *ngIf="!loading && tickets.length > 0">
-        <table>
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden" *ngIf="!loading && tickets.length > 0">
+        <table class="w-full">
           <thead>
-            <tr>
-              <th>Ticket #</th>
-              <th>Title</th>
-              <th>Customer</th>
-              <th>Priority</th>
-              <th>Created</th>
-              <th>SLA Deadline</th>
-              <th>Assign To</th>
-              <th>Action</th>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Ticket #</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Title</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Customer</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Priority</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Created</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">SLA Deadline</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Assign To</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-700">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let ticket of tickets">
-              <td>
-                <a [routerLink]="['/tickets', ticket.id]" class="ticket-link">#{{ticket.id}}</a>
+            <tr *ngFor="let ticket of tickets" class="border-b border-gray-200">
+              <td class="px-4 py-4">
+                <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 hover:text-blue-800 font-medium">#{{ticket.id}}</a>
               </td>
-              <td>
-                <div class="ticket-title">{{ticket.title}}</div>
-                <div class="ticket-category" *ngIf="ticket.category">{{ticket.category}}</div>
+              <td class="px-4 py-4">
+                <div class="font-medium mb-1">{{ticket.title}}</div>
+                <div *ngIf="ticket.category" class="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block">{{ticket.category}}</div>
               </td>
-              <td>
-                <div class="customer-info">
-                  <div>{{ticket.customer_first_name}} {{ticket.customer_last_name}}</div>
-                  <div class="customer-email">{{ticket.customer_email}}</div>
-                </div>
+              <td class="px-4 py-4 text-sm">
+                <div>{{ticket.customer_first_name}} {{ticket.customer_last_name}}</div>
+                <div class="text-gray-600">{{ticket.customer_email}}</div>
               </td>
-              <td>
-                <span class="priority" [class]="'priority-' + ticket.priority">{{ticket.priority | uppercase}}</span>
+              <td class="px-4 py-4">
+                <span class="px-3 py-1 rounded-full text-xs font-bold" 
+                      [ngClass]="{
+                        'bg-green-100 text-green-800': ticket.priority === 'low',
+                        'bg-yellow-100 text-yellow-800': ticket.priority === 'medium',
+                        'bg-red-100 text-red-800': ticket.priority === 'high'
+                      }">{{ticket.priority | uppercase}}</span>
               </td>
-              <td>{{ticket.created_at | date:'MMM d, h:mm a'}}</td>
-              <td>
-                <span class="sla-deadline" [class.overdue]="isOverdue(ticket.sla_deadline)">
-                  {{ticket.sla_deadline | date:'MMM d, h:mm a'}}
-                </span>
+              <td class="px-4 py-4 text-sm">{{ticket.created_at | date:'MMM d, h:mm a'}}</td>
+              <td class="px-4 py-4 text-sm" [class.text-red-600]="isOverdue(ticket.sla_deadline)" [class.font-medium]="isOverdue(ticket.sla_deadline)">
+                {{ticket.sla_deadline | date:'MMM d, h:mm a'}}
               </td>
-              <td>
-                <select [(ngModel)]="ticket.selectedAgentId" class="agent-select">
+              <td class="px-4 py-4">
+                <select [(ngModel)]="ticket.selectedAgentId" class="w-full px-2 py-1 border border-gray-300 rounded">
                   <option value="">Select Agent</option>
                   <option *ngFor="let agent of agents" [value]="agent.id">
                     {{agent.first_name}} {{agent.last_name}}
                   </option>
                 </select>
               </td>
-              <td>
+              <td class="px-4 py-4">
                 <button 
                   (click)="assignTicket(ticket)" 
                   [disabled]="!ticket.selectedAgentId || assigning === ticket.id"
-                  class="btn-assign">
+                  class="bg-green-600 hover:bg-green-700 disabled:bg-gray-500 text-white px-4 py-2 rounded text-sm">
                   {{assigning === ticket.id ? 'Assigning...' : 'Assign'}}
                 </button>
               </td>
@@ -93,134 +97,10 @@ interface Agent {
         </table>
       </div>
 
-      <div *ngIf="message" class="message" [class.error]="isError">{{message}}</div>
+      <div *ngIf="message" class="mt-4 p-4 rounded" [ngClass]="isError ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'">{{message}}</div>
     </div>
   `,
-  styles: [`
-    .unassigned-tickets-container {
-      padding: 2rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-    }
-    .stats {
-      display: flex;
-      gap: 1rem;
-    }
-    .stat-item {
-      background: #f8f9fa;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-    }
-    .no-tickets {
-      text-align: center;
-      padding: 3rem;
-    }
-    .empty-state h3 {
-      color: #666;
-      margin-bottom: 1rem;
-    }
-    .tickets-table {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 1rem;
-      text-align: left;
-      border-bottom: 1px solid #e9ecef;
-    }
-    th {
-      background: #f8f9fa;
-      font-weight: 600;
-      color: #495057;
-    }
-    .ticket-link {
-      color: #007bff;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .ticket-title {
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-    }
-    .ticket-category {
-      font-size: 0.875rem;
-      color: #666;
-      background: #f8f9fa;
-      padding: 0.125rem 0.5rem;
-      border-radius: 4px;
-      display: inline-block;
-    }
-    .customer-info {
-      font-size: 0.875rem;
-    }
-    .customer-email {
-      color: #666;
-    }
-    .priority {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-    }
-    .priority-low { background-color: #d4edda; color: #155724; }
-    .priority-medium { background-color: #fff3cd; color: #856404; }
-    .priority-high { background-color: #f8d7da; color: #721c24; }
-    .sla-deadline {
-      font-size: 0.875rem;
-    }
-    .sla-deadline.overdue {
-      color: #dc3545;
-      font-weight: 500;
-    }
-    .agent-select {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .btn-assign {
-      background-color: #28a745;
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-    .btn-assign:disabled {
-      background-color: #6c757d;
-      cursor: not-allowed;
-    }
-    .message {
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: 4px;
-      background-color: #d4edda;
-      color: #155724;
-    }
-    .message.error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-  `]
+  styles: []
 })
 export class UnassignedTicketsComponent implements OnInit, OnDestroy {
   tickets: (Ticket & { selectedAgentId?: number })[] = [];

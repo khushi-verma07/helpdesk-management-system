@@ -13,380 +13,186 @@ import { User } from '../../../models/user.model';
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
   template: `
-    <div class="ticket-detail-container" *ngIf="ticket">
-      <div class="ticket-header">
-        <div class="header-content">
-          <nav class="breadcrumb">
-            <a routerLink="/dashboard" class="breadcrumb-link">🏠 Dashboard</a>
-            <span class="breadcrumb-separator">></span>
-            <a routerLink="/tickets/my" class="breadcrumb-link">My Tickets</a>
-            <span class="breadcrumb-separator">></span>
-            <span class="breadcrumb-current">Ticket #{{ticket.id}}</span>
-          </nav>
-          <div class="ticket-info">
-            <h1>{{ticket.title}}</h1>
-            <div class="ticket-meta">
-              <span class="priority" [class]="'priority-' + ticket.priority">{{ticket.priority | uppercase}}</span>
-              <span class="status" [class]="'status-' + ticket.status">{{getStatusLabel(ticket.status)}}</span>
-              <span class="ticket-id">Ticket #{{ticket.id}}</span>
-            </div>
+    <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col" *ngIf="ticket">
+      <!-- Mobile-first Header -->
+      <header class="bg-white px-3 sm:px-4 lg:px-6 py-2 sm:py-3 shadow-lg flex-shrink-0 border-b border-gray-200">
+        <div class="flex items-center justify-between mb-2 sm:mb-0">
+          <!-- Breadcrumb - Hidden on mobile, shown on sm+ -->
+          <div class="hidden sm:flex items-center space-x-2 text-xs lg:text-sm">
+            <a routerLink="/dashboard" class="text-slate-600 hover:text-slate-800 transition-colors">🏠 Dashboard</a>
+            <span class="text-slate-400">></span>
+            <a *ngIf="currentUser?.role === 'customer'" routerLink="/tickets/my" class="text-slate-600 hover:text-slate-800 transition-colors">My Tickets</a>
+            <a *ngIf="currentUser?.role === 'agent'" routerLink="/tickets/assigned" class="text-slate-600 hover:text-slate-800 transition-colors">Assigned Tickets</a>
+            <span class="text-slate-400">></span>
+            <span class="text-slate-800 font-medium">Ticket #{{ticket.id}}</span>
+          </div>
+          <!-- Mobile back button -->
+          <button *ngIf="currentUser?.role === 'customer'" routerLink="/tickets/my" class="sm:hidden text-slate-600 hover:text-slate-800 text-sm">← Back</button>
+          <button *ngIf="currentUser?.role === 'agent'" routerLink="/tickets/assigned" class="sm:hidden text-slate-600 hover:text-slate-800 text-sm">← Back</button>
+        </div>
+        <div class="">
+          <h1 class="text-base sm:text-lg lg:text-xl font-bold text-slate-800 mb-1 sm:mb-2">{{ticket.title}}</h1>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium" [ngClass]="getPriorityClass(ticket.priority)">{{ticket.priority | uppercase}}</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium" [ngClass]="getStatusClass(ticket.status)">{{getStatusLabel(ticket.status)}}</span>
+            <span class="text-slate-600 text-xs">#{{ticket.id}}</span>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div class="ticket-content">
-        <div class="ticket-details">
-          <div class="detail-card">
-            <h3>Ticket Details</h3>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Created:</label>
-                <span>{{ticket.created_at | date:'MMM d, yyyy h:mm a'}}</span>
-              </div>
-              <div class="detail-item">
-                <label>SLA Deadline:</label>
-                <span>{{ticket.sla_deadline | date:'MMM d, yyyy h:mm a'}}</span>
-              </div>
-              <div class="detail-item" *ngIf="ticket.category">
-                <label>Category:</label>
-                <span>{{ticket.category}}</span>
-              </div>
-              <div class="detail-item" *ngIf="ticket.agent_first_name">
-                <label>Assigned Agent:</label>
-                <span>{{ticket.agent_first_name}} {{ticket.agent_last_name}}</span>
-              </div>
-            </div>
-            
-            <!-- Status Update Section (Agents/Admins only) -->
-            <div *ngIf="canUpdateStatus()" class="status-update-section">
-              <h4>Update Status</h4>
-              <div class="status-controls">
-                <select [(ngModel)]="selectedStatus" class="status-select">
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="on_hold">On Hold</option>
-                  <option value="resolved">Resolved</option>
-                </select>
-                <button (click)="updateStatus()" [disabled]="updatingStatus || selectedStatus === ticket.status" class="btn-update-status">
-                  {{updatingStatus ? 'Updating...' : 'Update Status'}}
-                </button>
-              </div>
-            </div>
-            
-            <div class="description">
-              <label>Description:</label>
-              <p>{{ticket.description}}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="messages-section">
-          <div class="messages-card">
-            <h3>Messages</h3>
-            
-            <div class="messages-list" *ngIf="messages.length > 0">
-              <div *ngFor="let message of messages" class="message" 
-                   [class.own-message]="message.sender_id === currentUserId"
-                   [class.internal-note]="message.is_internal">
-                <div class="message-header">
-                  <span class="sender">{{message.first_name}} {{message.last_name}}</span>
-                  <span class="role-badge" [class]="'role-' + message.role">{{message.role}}</span>
-                  <span *ngIf="message.is_internal" class="internal-badge">Internal Note</span>
-                  <span class="timestamp">{{message.created_at | date:'MMM d, h:mm a'}}</span>
+      <!-- Main Content - Mobile-first Layout -->
+      <div class="flex-1 p-2 sm:p-3 lg:p-4 max-w-7xl mx-auto w-full overflow-hidden">
+        <!-- Mobile: Stack vertically, Desktop: Side by side -->
+        <div class="flex flex-col lg:grid lg:grid-cols-3 gap-3 lg:gap-4 h-full">
+          
+          <!-- Ticket Details - Full width on mobile, sidebar on desktop -->
+          <div class="lg:col-span-1 order-2 lg:order-1">
+            <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 h-auto lg:h-full overflow-y-auto">
+              <h3 class="font-semibold text-slate-800 mb-3 text-sm lg:text-base">Ticket Details</h3>
+              
+              <!-- Details Grid - 2 columns on mobile, 1 on desktop -->
+              <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-1 text-xs sm:text-sm mb-4">
+                <div class="lg:flex lg:justify-between">
+                  <span class="text-gray-500 block lg:inline">Created:</span>
+                  <span class="text-gray-800 font-medium lg:font-normal">{{ticket.created_at | date:'MMM d, h:mm a'}}</span>
                 </div>
-                <div class="message-content">{{message.message}}</div>
+                <div class="lg:flex lg:justify-between">
+                  <span class="text-gray-500 block lg:inline">SLA Deadline:</span>
+                  <span class="text-gray-800 font-medium lg:font-normal">{{ticket.sla_deadline | date:'MMM d, h:mm a'}}</span>
+                </div>
+                <div class="lg:flex lg:justify-between" *ngIf="ticket.category">
+                  <span class="text-gray-500 block lg:inline">Category:</span>
+                  <span class="text-gray-800 font-medium lg:font-normal">{{ticket.category}}</span>
+                </div>
+                <div class="lg:flex lg:justify-between" *ngIf="ticket.agent_first_name">
+                  <span class="text-gray-500 block lg:inline">Agent:</span>
+                  <span class="text-gray-800 font-medium lg:font-normal">{{ticket.agent_first_name}} {{ticket.agent_last_name}}</span>
+                </div>
+              </div>
+              
+              <!-- Status Update Section -->
+              <div *ngIf="canUpdateStatus()" class="mb-4 pt-3 border-t border-gray-200">
+                <h4 class="font-medium text-slate-800 mb-2 text-sm">Update Status</h4>
+                <div class="space-y-2">
+                  <select [(ngModel)]="selectedStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white/80">
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="on_hold">On Hold</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                  <button (click)="updateStatus()" [disabled]="updatingStatus || selectedStatus === ticket.status" 
+                          class="w-full border-2 border-slate-600 bg-transparent text-slate-800 hover:bg-gradient-to-br hover:from-slate-600 hover:to-slate-700 hover:!text-white hover:border-transparent disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-800 disabled:hover:border-slate-600 py-2 sm:py-3 rounded-lg text-sm font-semibold transition-all duration-200">
+                    {{updatingStatus ? 'Updating...' : 'Update Status'}}
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Description -->
+              <div class="pt-3 border-t border-gray-200">
+                <h4 class="font-medium text-slate-800 mb-2 text-sm">Description</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">{{ticket.description}}</p>
               </div>
             </div>
+          </div>
 
-            <div *ngIf="messages.length === 0" class="no-messages">
-              <p>No messages yet. Start the conversation!</p>
+          <!-- Messages Section - Full width on mobile, main content on desktop -->
+          <div class="lg:col-span-2 order-1 lg:order-2 flex-1 lg:flex-none">
+            <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 h-96 sm:h-[500px] lg:h-full flex flex-col">
+              <div class="p-3 sm:p-4 border-b border-gray-200/50 flex-shrink-0">
+                <h3 class="font-semibold text-slate-800 text-sm lg:text-base">Messages</h3>
+              </div>
+              
+              <!-- Messages List -->
+              <div class="flex-1 p-3 sm:p-4 overflow-y-auto" *ngIf="messages.length > 0">
+                <div class="space-y-3">
+                  <div *ngFor="let message of messages" class="p-3 rounded-lg" 
+                       [ngClass]="message.sender_id === currentUserId ? 'bg-gradient-to-r from-emerald-50 to-teal-50 ml-0 sm:ml-8 lg:ml-12 border border-emerald-200/50' : 'bg-gray-50/80 mr-0 sm:mr-8 lg:mr-12 border border-gray-200/50'">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1 sm:gap-0">
+                      <div class="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <span class="font-medium text-gray-800 text-sm">{{message.first_name}} {{message.last_name}}</span>
+                        <span class="px-2 py-0.5 rounded text-xs" [ngClass]="getRoleClass(message.role)">{{message.role}}</span>
+                        <span *ngIf="message.is_internal" class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">Internal</span>
+                      </div>
+                      <span class="text-gray-500 text-xs sm:text-sm">{{message.created_at | date:'MMM d, h:mm a'}}</span>
+                    </div>
+                    <div class="text-gray-700 text-sm leading-relaxed">{{message.message}}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="messages.length === 0" class="flex-1 flex items-center justify-center p-4">
+                <div class="text-center">
+                  <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span class="text-lg">💬</span>
+                  </div>
+                  <p class="text-gray-500 text-sm">No messages yet. Start the conversation!</p>
+                </div>
+              </div>
+
+              <!-- Message Forms -->
+              <div class="p-3 sm:p-4 border-t border-gray-200/50 space-y-3 flex-shrink-0">
+                <!-- Public Message Form -->
+                <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">{{getMessageFormLabel()}}</label>
+                    <textarea 
+                      formControlName="message" 
+                      placeholder="Type your message here..."
+                      rows="3"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white/80 resize-none"></textarea>
+                    <button type="submit" [disabled]="messageForm.invalid || sending" 
+                            class="w-full sm:w-auto border-2 border-slate-600 bg-transparent text-slate-800 hover:bg-gradient-to-br hover:from-slate-600 hover:to-slate-700 hover:!text-white hover:border-transparent disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-800 disabled:hover:border-slate-600 px-4 py-2 sm:py-3 rounded-lg text-sm font-semibold transition-all duration-200">
+                      {{sending ? 'Sending...' : 'Send Message'}}
+                    </button>
+                  </div>
+                </form>
+
+                <!-- Internal Notes Form -->
+                <form *ngIf="canAddInternalNotes()" [formGroup]="internalNoteForm" (ngSubmit)="addInternalNote()" class="pt-3 border-t border-gray-200">
+                  <div class="space-y-2">
+                    <label class="block text-xs font-medium text-gray-700">Internal Note (team only)</label>
+                    <textarea 
+                      formControlName="note" 
+                      placeholder="Add internal note for team members..."
+                      rows="2"
+                      class="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-white/80"></textarea>
+                    <button type="submit" [disabled]="internalNoteForm.invalid || sendingNote" 
+                            class="border-2 border-slate-600 bg-transparent text-slate-800 hover:bg-gradient-to-br hover:from-slate-600 hover:to-slate-700 hover:!text-white hover:border-transparent disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-800 disabled:hover:border-slate-600 px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-200">
+                      {{sendingNote ? 'Adding...' : 'Add Internal Note'}}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-
-            <!-- Customer/Public Message Form -->
-            <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="message-form">
-              <div class="form-group">
-                <label>{{getMessageFormLabel()}}</label>
-                <textarea 
-                  formControlName="message" 
-                  placeholder="Type your message here..."
-                  rows="3"></textarea>
-              </div>
-              <button type="submit" [disabled]="messageForm.invalid || sending" class="btn-primary">
-                {{sending ? 'Sending...' : 'Send Message'}}
-              </button>
-            </form>
-
-            <!-- Internal Notes Form (Agents/Admins only) -->
-            <form *ngIf="canAddInternalNotes()" [formGroup]="internalNoteForm" (ngSubmit)="addInternalNote()" class="internal-note-form">
-              <div class="form-group">
-                <label>Internal Note (only visible to agents/admins):</label>
-                <textarea 
-                  formControlName="note" 
-                  placeholder="Add internal note for team members..."
-                  rows="2"></textarea>
-              </div>
-              <button type="submit" [disabled]="internalNoteForm.invalid || sendingNote" class="btn-secondary">
-                {{sendingNote ? 'Adding...' : 'Add Internal Note'}}
-              </button>
-            </form>
           </div>
         </div>
       </div>
     </div>
 
-    <div *ngIf="loading" class="loading">Loading ticket details...</div>
-    <div *ngIf="error" class="error">{{error}}</div>
+    <div *ngIf="loading" class="h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
+      <div class="flex items-center space-x-2 text-emerald-600">
+        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-xs">Loading ticket details...</span>
+      </div>
+    </div>
+    
+    <div *ngIf="error" class="h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
+      <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 p-4 max-w-sm">
+        <div class="text-center">
+          <div class="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
+            <span class="text-white text-sm">⚠️</span>
+          </div>
+          <h3 class="text-sm font-semibold text-red-600 mb-1">Error</h3>
+          <p class="text-red-600 text-xs">{{error}}</p>
+        </div>
+      </div>
+    </div>
   `,
-  styles: [`
-    .ticket-detail-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    .ticket-header {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 2rem;
-    }
-    .breadcrumb {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1rem;
-      font-size: 0.875rem;
-    }
-    .breadcrumb-link {
-      color: #007bff;
-      text-decoration: none;
-    }
-    .breadcrumb-separator {
-      margin: 0 0.5rem;
-      color: #666;
-    }
-    .breadcrumb-current {
-      color: #666;
-    }
-    .ticket-info h1 {
-      margin: 0 0 1rem 0;
-      color: #333;
-    }
-    .ticket-meta {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    .priority, .status {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-    }
-    .priority-low { background-color: #d4edda; color: #155724; }
-    .priority-medium { background-color: #fff3cd; color: #856404; }
-    .priority-high { background-color: #f8d7da; color: #721c24; }
-    .status-open { background-color: #cce5ff; color: #004085; }
-    .status-in_progress { background-color: #fff3cd; color: #856404; }
-    .status-resolved { background-color: #d4edda; color: #155724; }
-    .ticket-id {
-      color: #666;
-      font-size: 0.875rem;
-    }
-    .ticket-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-    .detail-card, .messages-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .detail-card h3, .messages-card h3 {
-      margin: 0 0 1.5rem 0;
-      color: #333;
-    }
-    .detail-grid {
-      display: grid;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .detail-item {
-      display: flex;
-      justify-content: space-between;
-    }
-    .detail-item label {
-      font-weight: 500;
-      color: #666;
-    }
-    .description label {
-      display: block;
-      font-weight: 500;
-      color: #666;
-      margin-bottom: 0.5rem;
-    }
-    .description p {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 4px;
-      margin: 0;
-      line-height: 1.5;
-    }
-    .messages-list {
-      max-height: 400px;
-      overflow-y: auto;
-      margin-bottom: 1.5rem;
-    }
-    .message {
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: 8px;
-      background: #f8f9fa;
-    }
-    .message.own-message {
-      background: #e3f2fd;
-      margin-left: 2rem;
-    }
-    .message.internal-note {
-      background: #fff3e0;
-      border-left: 4px solid #ff9800;
-      position: relative;
-    }
-    .message.internal-note.own-message {
-      background: #fff8e1;
-    }
-    .message-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.875rem;
-    }
-    .sender {
-      font-weight: 500;
-    }
-    .role-badge {
-      padding: 0.125rem 0.5rem;
-      border-radius: 8px;
-      font-size: 0.75rem;
-    }
-    .role-customer { background-color: #e3f2fd; color: #1976d2; }
-    .role-agent { background-color: #fff3e0; color: #f57c00; }
-    .role-admin { background-color: #fce4ec; color: #c2185b; }
-    .internal-badge {
-      padding: 0.125rem 0.5rem;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      background-color: #ff9800;
-      color: white;
-      font-weight: bold;
-    }
-    .timestamp {
-      color: #666;
-      margin-left: auto;
-    }
-    .message-content {
-      line-height: 1.4;
-    }
-    .no-messages {
-      text-align: center;
-      color: #666;
-      padding: 2rem;
-    }
-    .message-form {
-      border-top: 1px solid #e9ecef;
-      padding-top: 1.5rem;
-    }
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-    .btn-primary {
-      background-color: #007bff;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .btn-primary:disabled {
-      background-color: #6c757d;
-      cursor: not-allowed;
-    }
-    .btn-secondary {
-      background-color: #6c757d;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .btn-secondary:disabled {
-      background-color: #adb5bd;
-      cursor: not-allowed;
-    }
-    .status-update-section {
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #e9ecef;
-    }
-    .status-update-section h4 {
-      margin: 0 0 1rem 0;
-      color: #333;
-    }
-    .status-controls {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    .status-select {
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .btn-update-status {
-      background-color: #ffc107;
-      color: #212529;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .btn-update-status:disabled {
-      background-color: #6c757d;
-      color: white;
-      cursor: not-allowed;
-    }
-    .internal-note-form {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e9ecef;
-    }
-    .internal-note-form label {
-      color: #856404;
-      font-weight: 500;
-    }
-    .loading, .error {
-      text-align: center;
-      padding: 3rem;
-    }
-    .error {
-      color: #dc3545;
-    }
-    @media (max-width: 768px) {
-      .ticket-content {
-        grid-template-columns: 1fr;
-      }
-    }
-  `]
+  styles: []
 })
 export class TicketDetailComponent implements OnInit, OnDestroy {
   ticket: Ticket | null = null;
@@ -568,5 +374,34 @@ export class TicketDetailComponent implements OnInit, OnDestroy {
 
   getMessageFormLabel(): string {
     return this.currentUser?.role === 'customer' ? 'Share Message' : 'Public Message (visible to customer):';
+  }
+
+  getPriorityClass(priority: string): string {
+    const classes: { [key: string]: string } = {
+      'low': 'bg-green-100 text-green-800',
+      'medium': 'bg-yellow-100 text-yellow-800',
+      'high': 'bg-red-100 text-red-800'
+    };
+    return classes[priority] || 'bg-gray-100 text-gray-800';
+  }
+
+  getStatusClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      'open': 'bg-blue-100 text-blue-800',
+      'in_progress': 'bg-purple-100 text-purple-800',
+      'on_hold': 'bg-orange-100 text-orange-800',
+      'resolved': 'bg-green-100 text-green-800',
+      'closed': 'bg-gray-100 text-gray-800'
+    };
+    return classes[status] || 'bg-gray-100 text-gray-800';
+  }
+
+  getRoleClass(role: string): string {
+    const classes: { [key: string]: string } = {
+      'customer': 'bg-blue-100 text-blue-800',
+      'agent': 'bg-purple-100 text-purple-800',
+      'admin': 'bg-pink-100 text-pink-800'
+    };
+    return classes[role] || 'bg-gray-100 text-gray-800';
   }
 }
