@@ -98,7 +98,14 @@ class Ticket {
        FROM tickets t 
        JOIN users c ON t.customer_id = c.id 
        LEFT JOIN users a ON t.assigned_agent_id = a.id 
-       ORDER BY t.created_at DESC`
+       ORDER BY 
+         CASE t.priority 
+           WHEN 'high' THEN 1 
+           WHEN 'medium' THEN 2 
+           WHEN 'low' THEN 3 
+           ELSE 4 
+         END, 
+         t.created_at DESC`
     );
     return rows;
   }
