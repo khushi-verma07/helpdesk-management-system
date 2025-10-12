@@ -13,9 +13,9 @@ import { User } from '../../../models/user.model';
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col" *ngIf="ticket">
+    <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col hide-scrollbar" *ngIf="ticket">
       <!-- Mobile-first Header -->
-      <header class="bg-white px-3 sm:px-4 lg:px-6 py-2 sm:py-3 shadow-lg flex-shrink-0 border-b border-gray-200">
+      <header class="bg-white px-3 sm:px-4 lg:px-6 py-1 shadow-lg flex-shrink-0 border-b border-gray-200">
         <div class="flex items-center justify-between mb-2 sm:mb-0">
           <!-- Breadcrumb - Hidden on mobile, shown on sm+ -->
           <div class="hidden sm:flex items-center space-x-2 text-xs lg:text-sm">
@@ -41,13 +41,13 @@ import { User } from '../../../models/user.model';
       </header>
 
       <!-- Main Content - Mobile-first Layout -->
-      <div class="flex-1 p-2 sm:p-3 lg:p-4 max-w-7xl mx-auto w-full overflow-hidden">
+      <div class="flex-1 p-1 max-w-7xl mx-auto w-full overflow-hidden">
         <!-- Mobile: Stack vertically, Desktop: Side by side -->
-        <div class="flex flex-col lg:grid lg:grid-cols-3 gap-3 lg:gap-4 h-full">
+        <div class="flex flex-col lg:grid lg:grid-cols-3 gap-2 h-full">
           
           <!-- Ticket Details - Full width on mobile, sidebar on desktop -->
           <div class="lg:col-span-1 order-2 lg:order-1">
-            <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 h-auto lg:h-full overflow-y-auto">
+            <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 p-2 h-auto lg:h-full overflow-y-auto">
               <h3 class="font-semibold text-slate-800 mb-3 text-sm lg:text-base">Ticket Details</h3>
               
               <!-- Details Grid - 2 columns on mobile, 1 on desktop -->
@@ -98,12 +98,12 @@ import { User } from '../../../models/user.model';
           <!-- Messages Section - Full width on mobile, main content on desktop -->
           <div class="lg:col-span-2 order-1 lg:order-2 flex-1 lg:flex-none">
             <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 h-96 sm:h-[500px] lg:h-full flex flex-col">
-              <div class="p-3 sm:p-4 border-b border-gray-200/50 flex-shrink-0">
+              <div class="p-2 border-b border-gray-200/50 flex-shrink-0">
                 <h3 class="font-semibold text-slate-800 text-sm lg:text-base">Messages</h3>
               </div>
               
               <!-- Messages List -->
-              <div class="flex-1 p-3 sm:p-4 overflow-y-auto" *ngIf="messages.length > 0">
+              <div class="h-48 p-3 sm:p-4 overflow-y-auto custom-scrollbar" *ngIf="messages.length > 0">
                 <div class="space-y-3">
                   <div *ngFor="let message of messages" class="p-3 rounded-lg" 
                        [ngClass]="message.sender_id === currentUserId ? 'bg-gradient-to-r from-emerald-50 to-teal-50 ml-0 sm:ml-8 lg:ml-12 border border-emerald-200/50' : 'bg-gray-50/80 mr-0 sm:mr-8 lg:mr-12 border border-gray-200/50'">
@@ -131,7 +131,7 @@ import { User } from '../../../models/user.model';
               </div>
 
               <!-- Message Forms -->
-              <div class="p-3 sm:p-4 border-t border-gray-200/50 space-y-3 flex-shrink-0">
+              <div class="p-2 border-t border-gray-200/50 space-y-2 flex-shrink-0">
                 <!-- Public Message Form -->
                 <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
                   <div class="space-y-2">
@@ -192,7 +192,28 @@ import { User } from '../../../models/user.model';
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: #94a3b8;
+    }
+    .hide-scrollbar {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  `]
 })
 export class TicketDetailComponent implements OnInit, OnDestroy {
   ticket: Ticket | null = null;

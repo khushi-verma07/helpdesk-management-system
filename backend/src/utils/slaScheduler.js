@@ -49,7 +49,7 @@ class SLAScheduler {
     // Log the escalation
     await pool.execute(
       'INSERT INTO ticket_history (ticket_id, field_name, new_value, changed_by) VALUES (?, ?, ?, ?)',
-      [ticketId, 'escalated', 'overdue', 1] // System user ID = 1
+      [ticketId, 'escalated', 'overdue', 3] // Admin user ID = 3
     );
   }
 
@@ -61,10 +61,30 @@ class SLAScheduler {
     console.log(`   Agent: ${ticket.agent_first_name ? `${ticket.agent_first_name} ${ticket.agent_last_name}` : 'Unassigned'}`);
     console.log(`   SLA Deadline: ${ticket.sla_deadline}`);
     
-    // Add internal escalation note
+    // Get the admin who assigned the ticket, fallback to system admin
+    let assigningAdminId = 3; // Default to Admin User (ID 3)
+    
+    // Find the admin ID from the ticket history
+    const [adminResult] = await pool.execute(`
+      SELECT th.changed_by
+      FROM ticket_history th
+      JOIN users u ON th.changed_by = u.id
+      WHERE th.ticket_id = ? AND th.field_name = 'assigned_agent_id' AND u.role = 'admin'
+      ORDER BY th.created_at DESC
+      LIMIT 1
+    `, [ticket.id]);
+    
+    if (adminResult.length > 0) {
+      assigningAdminId = adminResult[0].changed_by;
+      console.log(`   Assigned by admin ID: ${assigningAdminId}`);
+    } else {
+      console.log(`   No admin assignment found, using system admin`);
+    }
+    
+    // Add internal escalation note with the admin who assigned the ticket
     await pool.execute(
       'INSERT INTO chat_messages (ticket_id, sender_id, message, is_internal) VALUES (?, ?, ?, TRUE)',
-      [ticket.id, 1, `🚨 ESCALATION: This ticket has exceeded its SLA deadline and requires immediate attention.`]
+      [ticket.id, assigningAdminId, `🚨 ESCALATION: This ticket has exceeded its SLA deadline and requires immediate attention.`]
     );
   }
 

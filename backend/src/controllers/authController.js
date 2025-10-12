@@ -9,8 +9,16 @@ const generateToken = (userId) => {
 
 const register = async (req, res) => {
   try {
+    // var user={email:"",password:"",first_name:"",last_name:"",role:"",phone:"",};
     const { email, password, first_name, last_name, role, phone } = req.body;
-
+    // user.email=req.body.email;
+    // user.password=req.body.password;
+    // user.first_name=req.body.first_name;
+    // user.last_name=req.body.last_name;
+    // user.role=req.body.role;
+    // user.phone=req.body.phone;
+    // // user.emp_type=req.body.user_type;
+    // const { email, password, first_name, last_name, role, phone , emp_type} = user;
     // Check if user exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {

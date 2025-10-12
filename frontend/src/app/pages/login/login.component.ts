@@ -162,7 +162,7 @@ export class LoginComponent {
       
       this.authService.login(this.loginForm.value).subscribe({
         next: (response) => {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/dashboard'],{queryParams:{name:"khushi"}});
         },
         error: (error) => {
           this.errorMessage = error.error?.message || 'Login failed';
